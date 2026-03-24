@@ -1,91 +1,147 @@
 import connection from "../database.js"
+import bcrypt from "bcrypt"
 
+// GET ALL USERS
 export const getUsers = async (req, res) => {
-    const [users] = await connection.query(`SELECT * FROM users`)
-
-    res.status(200).json({
-        ok: true,
-        message: "berhasil fetch user",
-        data: users
-    })
+    try {
+        const [users] = await connection.query(
+            `SELECT id, username, email, id_company FROM users`
+        )
+        
+        res.status(200).json({
+            ok: true,
+            message: "berhasil fetch user",
+            data: users
+        })
+    } catch (error) {
+        res.status(500).json({
+            ok: false,
+            message: error.message
+        })
+    }
 }
 
+// GET USER BY ID
 export const getUsersById = async (req, res) => {
-    const [user] = await connection.query(
-        `SELECT * FROM users WHERE id = ?`,
-        [req.params.id]
-    )
+    try {
+        const [user] = await connection.query(
+            `SELECT id, username, email, id_company FROM users WHERE id = ?`,
+            [req.params.id]
+        )
 
-    if (user.length === 0) {
-        return res.status(404).json({
+        if (user.length === 0) {
+            return res.status(404).json({
+                ok: false,
+                message: "user tidak ditemukan"
+            })
+        }
+
+        res.status(200).json({
+            ok: true,
+            message: "berhasil fetch user by id",
+            data: user[0]
+        })
+    } catch (error) {
+        res.status(500).json({
             ok: false,
-            message: "user tidak ditemukan"
+            message: error.message
         })
     }
-
-    res.status(200).json({
-        ok: true,
-        message: "berhasil fetch user by id",
-        data: user[0]
-    })
 }
 
+// ADD USER
 export const addUser = async (req, res) => {
-    const { username, email, password, company_id } = req.body
+    try {
+        const { username, email, password, id_company } = req.body
 
-    const [result] = await connection.query(
-        `INSERT INTO users (username,email,password,company_id)
-        VALUES (?,?,?,?)`,
-        [username, email, password, company_id]
-    )
+        if (!username || !email || !password) {
+            return res.status(400).json({
+                ok: false,
+                message: "semua field wajib diisi"
+            })
+        }
 
-    res.status(201).json({
-        ok: true,
-        message: "user created",
-        user_id: result.insertId
-    })
+        const hashedPassword = await bcrypt.hash(password, 10)
+
+        const [result] = await connection.query(
+            `INSERT INTO users (username,email,password,id_company)
+                VALUES (?,?,?,?)`,
+            [username, email, hashedPassword, id_company]
+        )
+
+        res.status(201).json({
+            ok: true,
+            message: "user created",
+            user_id: result.insertId
+        })
+    } catch (error) {
+        res.status(500).json({
+            ok: false,
+            message: error.message
+        })
+    }
 }
 
+// UPDATE USER
 export const updateUser = async (req, res) => {
+    try {
+        const { username, email, password, id_company } = req.body
 
-    const { username, email, password, company_id } = req.body
+        let hashedPassword = password
 
-    const [result] = await connection.query(
-        `UPDATE users 
-        SET username=?, email=?, password=?, company_id=? 
-        WHERE id=?`,
-        [username, email, password, company_id, req.params.id]
-    )
+        if (password) {
+            hashedPassword = await bcrypt.hash(password, 10)
+        }
 
-    if (result.affectedRows === 0) {
-        return res.status(404).json({
+        const [result] = await connection.query(
+            `UPDATE users 
+                SET username=?, email=?, password=?, id_company=? 
+                WHERE id=?`,
+            [username, email, hashedPassword, id_company, req.params.id]
+        )
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                ok: false,
+                message: "user tidak ditemukan"
+            })
+        }
+
+        res.status(200).json({
+            ok: true,
+            message: "user updated"
+        })
+    } catch (error) {
+        res.status(500).json({
             ok: false,
-            message: "user tidak ditemukan"
+            message: error.message
         })
     }
-
-    res.status(200).json({
-        ok: true,
-        message: "user updated"
-    })
 }
 
+// DELETE USER
 export const deleteUser = async (req, res) => {
-    const [result] = await connection.query(
-        `DELETE FROM users WHERE id=?`,
-        [req.params.id]
-    )
+    try {
+        const [result] = await connection.query(
+            `DELETE FROM users WHERE id=?`,
+            [req.params.id]
+        )
 
-    if (result.affectedRows === 0) {
-        return res.status(404).json({
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                ok: false,
+                message: "user tidak ditemukan"
+            })
+        }
+
+        res.status(200).json({
+            ok: true,
+            message: "user deleted"
+        })
+    } catch (error) {
+        res.status(500).json({
             ok: false,
-            message: "user tidak ditemukan"
+            message: error.message
         })
     }
-
-    res.status(200).json({
-        ok: true,
-        message: "user deleted"
-    })
 }
-
