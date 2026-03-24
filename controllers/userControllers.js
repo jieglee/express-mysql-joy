@@ -90,15 +90,16 @@ export const updateUser = async (req, res) => {
         let hashedPassword = password
 
         if (password) {
-            hashedPassword = await bcrypt.hash(password, 10)
+            await connection.query(
+                `UPDATE users SET username=?, email=?, password=?, id_company=? WHERE id=?`,
+                [username, email, hashedPassword, id_company, req.params.id]
+            )
+        } else {
+            await connection.query(
+                `UPDATE users SET username=?, email=?, id_company=? WHERE id=?`,
+                [username, email, id_company, req.params.id]
+            )
         }
-
-        const [result] = await connection.query(
-            `UPDATE users 
-                SET username=?, email=?, password=?, id_company=? 
-                WHERE id=?`,
-            [username, email, hashedPassword, id_company, req.params.id]
-        )
 
         if (result.affectedRows === 0) {
             return res.status(404).json({
