@@ -1,5 +1,5 @@
 import connection from "../database.js"
-import bcrypt from "bcrypt"
+import bcrypt from "bcryptjs"
 
 // GET ALL USERS
 export const getUsers = async (req, res) => {
@@ -54,7 +54,7 @@ export const addUser = async (req, res) => {
     try {
         const { username, email, password, id_company } = req.body
 
-        if (!username || !email || !password) {
+        if (!username || !email || !password || !id_company) {
             return res.status(400).json({
                 ok: false,
                 message: "semua field wajib diisi"
@@ -87,15 +87,16 @@ export const updateUser = async (req, res) => {
     try {
         const { username, email, password, id_company } = req.body
 
-        let hashedPassword = password
+        let result
+        const hashedPassword = await bcrypt.hash(password, 10)
 
         if (password) {
-            await connection.query(
+            [result] = await connection.query(
                 `UPDATE users SET username=?, email=?, password=?, id_company=? WHERE id=?`,
                 [username, email, hashedPassword, id_company, req.params.id]
             )
         } else {
-            await connection.query(
+            [result] = await connection.query(
                 `UPDATE users SET username=?, email=?, id_company=? WHERE id=?`,
                 [username, email, id_company, req.params.id]
             )

@@ -21,7 +21,7 @@ export const getCompanies = async (req, res) => {
 export const getCompanyById = async (req, res) => {
     try {
         const [company] = await connection.query(
-            `SELECT * FROM company WHERE id=?`,
+            `SELECT * FROM company WHERE id_company=?`,
             [req.params.id]
         )
 
@@ -58,7 +58,7 @@ export const addCompany = async (req, res) => {
 
         const [result] = await connection.query(
             `INSERT INTO company (name,address)
-                VALUES (?,?,?)`,
+                VALUES (?,?)`,
             [name, address]
         )
 
@@ -81,7 +81,7 @@ export const updateCompany = async (req, res) => {
         const { name, address } = req.body
 
         const [result] = await connection.query(
-            `UPDATE company SET name=?, address=? WHERE id=?`,
+            `UPDATE company SET name=?, address=? WHERE id_company=?`,
             [name, address, req.params.id]
         )
 
@@ -108,7 +108,7 @@ export const updateCompany = async (req, res) => {
 export const deleteCompany = async (req, res) => {
     try {
         const [result] = await connection.query(
-            `DELETE FROM company WHERE id=?`,
+            `DELETE FROM company WHERE id_company=?`,
             [req.params.id]
         )
 
